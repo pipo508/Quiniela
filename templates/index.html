@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultados de Loterías</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --main-bg: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%); --panel-bg: rgba(30, 30, 60, 0.95); --border-color: rgba(255, 255, 255, 0.1); --primary-accent: #6c63ff; --secondary-accent: #ff6b6b; --text-primary: #ffffff; --text-secondary: #a0a0c0; --btn-border: rgba(108, 99, 255, 0.3); }
+        body { font-family: 'Poppins', sans-serif; background: var(--main-bg); color: var(--text-primary); min-height: 100vh; padding: 20px; display: flex; flex-direction: column; align-items: center; position: relative; }
+        body::before { content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="%23ffffff" stroke-width="0.1" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>'); pointer-events: none; z-index: -1; }
+        .container { width: 100%; max-width: 900px; background: var(--panel-bg); backdrop-filter: blur(20px); border: 1px solid var(--border-color); border-radius: 20px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 80px rgba(108, 99, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1); overflow: hidden; position: relative; }
+        .container::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #ff6b6b, #ffd93d, #6bcf7f, #4d9de0, #9b59b6, #ff6b6b); background-size: 200% 100%; animation: rainbow 3s linear infinite; }
+        @keyframes rainbow { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+        .header { padding: 40px 30px 20px; text-align: center; background: linear-gradient(135deg, rgba(108, 99, 255, 0.1), rgba(255, 107, 107, 0.1)); position: relative; }
+        h1 { font-size: 2.5rem; font-weight: 700; background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 10px; text-shadow: 0 0 30px rgba(108, 99, 255, 0.5); }
+        .subtitle { color: var(--text-secondary); font-size: 1.1rem; font-weight: 300; margin-top: 10px; }
+        .content { padding: 30px; }
+        .botones-nav { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .nav-button { padding: 18px 30px; font-size: 16px; font-weight: 600; background: linear-gradient(135deg, rgba(108, 99, 255, 0.1), rgba(108, 99, 255, 0.05)); border: 2px solid var(--btn-border); border-radius: 15px; cursor: pointer; transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1); position: relative; overflow: hidden; color: var(--text-primary); text-transform: uppercase; letter-spacing: 1px; }
+        .nav-button:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(108, 99, 255, 0.3); border-color: var(--primary-accent); }
+        .nav-button.active { background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent)); border-color: transparent; box-shadow: 0 8px 25px rgba(108, 99, 255, 0.4); transform: translateY(-2px); }
+        .nav-button:disabled { background: rgba(100, 100, 100, 0.2); border-color: rgba(100, 100, 100, 0.3); color: #666; cursor: not-allowed; transform: none; box-shadow: none; }
+        .tv-mode-link { position: absolute; top: 20px; right: 20px; padding: 10px 15px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; color: #fff; text-decoration: none; font-weight: 600; transition: all 0.3s ease; backdrop-filter: blur(5px); }
+        .tv-mode-link:hover { background: rgba(108, 99, 255, 0.8); border-color: var(--primary-accent); box-shadow: 0 0 20px rgba(108, 99, 255, 0.5); }
+        #date-controls { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 40px; background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 15px; border: 1px solid var(--border-color); transition: all 0.5s ease; max-height: 0; padding-top: 0; padding-bottom: 0; overflow: hidden; opacity: 0; }
+        #date-controls.visible { max-height: 100px; padding-top: 15px; padding-bottom: 15px; opacity: 1; }
+        .date-button, #date-picker { font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 600; color: var(--text-secondary); background: transparent; border: 2px solid var(--btn-border); border-radius: 10px; padding: 10px 15px; cursor: pointer; transition: all 0.3s ease; }
+        .date-button:hover, #date-picker:hover { border-color: var(--primary-accent); color: var(--text-primary); }
+        .date-button.active { background: var(--primary-accent); border-color: var(--primary-accent); color: #fff; }
+        #date-picker { color-scheme: dark; }
+        #resultados { min-height: 200px; }
+        .loading-message, .empty-message { text-align: center; padding: 60px 20px; font-size: 1.2rem; color: var(--text-secondary); background: rgba(255, 255, 255, 0.03); border-radius: 15px; border: 1px dashed var(--border-color); }
+        .sorteo { background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)); border: 1px solid var(--border-color); border-radius: 20px; padding: 25px; margin-bottom: 25px; backdrop-filter: blur(10px); transition: all 0.3s ease; position: relative; overflow: hidden; animation: fadeInUp 0.6s ease-out; }
+        .sorteo:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2), 0 0 50px rgba(108, 99, 255, 0.1); border-color: rgba(108, 99, 255, 0.3); }
+        .sorteo:last-child { margin-bottom: 0; }
+        .sorteo h2 { font-size: 1.5rem; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .sorteo p { color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 20px; font-weight: 300; }
+        .numeros-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 15px; margin-top: 20px; }
+        .numero { background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent)); border: none; border-radius: 12px; padding: 12px 8px; text-align: center; font-weight: 700; font-size: 1.2rem; color: var(--text-primary); box-shadow: 0 8px 20px rgba(108, 99, 255, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2); transition: all 0.3s cubic-bezier(0.23, 1, 0.320, 1); position: relative; overflow: hidden; }
+        .error-message { background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(255, 107, 107, 0.05)); border: 1px solid rgba(255, 107, 107, 0.3); border-radius: 15px; padding: 20px; text-align: center; color: var(--secondary-accent); font-weight: 500; }
+        @media (max-width: 768px) { .container { margin: 10px; border-radius: 15px; } h1 { font-size: 2rem; } .header { padding: 30px 20px 25px; } .content { padding: 20px; } .botones-nav { grid-template-columns: 1fr; gap: 15px; } .nav-button { padding: 15px 25px; font-size: 15px; } #date-controls { flex-direction: column; } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .spinner { border: 3px solid rgba(108, 99, 255, 0.3); border-radius: 50%; border-top: 3px solid var(--primary-accent); width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="/templates/tv.html" class="tv-mode-link" id="tv-link" title="Modo TV">📺</a>
+            <h1 id="titulo-quiniela">Resultados de Loterías</h1>
+            <p class="subtitle">Consultá los últimos números ganadores</p>
+        </div>
+        
+        <div class="content">
+            <div class="botones-nav">
+                <button class="nav-button" id="btnNacional">🎰 Nacional</button>
+                <button class="nav-button" id="btnMendoza">🏔️ Mendoza</button>
+                <button class="nav-button" id="btnTelekino">📺 Telekino</button>
+                <button class="nav-button" id="btnQuini6">🎲 Quini 6</button>
+            </div>
+
+            <div id="date-controls">
+                <button class="date-button" id="date-hoy">Hoy</button>
+                <button class="date-button active" id="date-ayer">Ayer</button>
+                <input type="date" id="date-picker">
+            </div>
+
+            <div id="resultados">
+                <div class="empty-message">
+                    <p>🎯 Seleccioná un juego para ver los últimos resultados</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const navButtons = document.querySelectorAll('.nav-button');
+        const resultadosDiv = document.getElementById('resultados');
+        const tituloQuiniela = document.getElementById('titulo-quiniela');
+        const dateControls = document.getElementById('date-controls');
+        const dateButtons = document.querySelectorAll('.date-button');
+        const datePicker = document.getElementById('date-picker');
+        const tvLink = document.getElementById('tv-link');
+
+        let juegoActual = null;
+        let fechaActual = 'ayer';
+
+        const fetchAndRender = async (tipoJuego, fecha) => {
+            navButtons.forEach(btn => btn.disabled = true);
+            dateButtons.forEach(btn => btn.disabled = true);
+            datePicker.disabled = true;
+
+            const botonActivo = document.getElementById(`btn${tipoJuego.charAt(0).toUpperCase() + tipoJuego.slice(1)}`);
+            tituloQuiniela.textContent = `Resultados ${botonActivo.textContent}`;
+            
+            resultadosDiv.innerHTML = `<div class="loading-message"><div class="spinner"></div><p>🔍 Buscando resultados, por favor esperá...</p></div>`;
+
+            try {
+                const response = await fetch(`http://127.0.0.1:5000/api/resultados/${tipoJuego}/${fecha}`);
+                if (!response.ok) throw new Error(`El servidor respondió con un error (${response.status})`);
+
+                const data = await response.json();
+                resultadosDiv.innerHTML = '';
+
+                if (!data || data.length === 0) {
+                    resultadosDiv.innerHTML = `<div class="empty-message"><p>😔 No se encontraron resultados para este juego en la fecha seleccionada.</p></div>`;
+                    return;
+                }
+
+                data.forEach((sorteo, index) => {
+                    const sorteoDiv = document.createElement('div');
+                    sorteoDiv.className = 'sorteo';
+                    sorteoDiv.style.animationDelay = `${index * 0.1}s`;
+                    let htmlNumeros = '<div class="numeros-grid">';
+                    sorteo.numeros.forEach(num => { htmlNumeros += `<div class="numero">${num}</div>`; });
+                    htmlNumeros += '</div>';
+                    sorteoDiv.innerHTML = `<h2>${sorteo.sorteo}</h2><p>📅 ${sorteo.fecha}</p>${htmlNumeros}`;
+                    resultadosDiv.appendChild(sorteoDiv);
+                });
+            } catch (error) {
+                resultadosDiv.innerHTML = `<div class="error-message"><p>❌ Error: No se pudieron cargar los resultados</p><p style="font-size: 0.9rem; margin-top: 10px; opacity: 0.8;">${error.message}</p></div>`;
+            } finally {
+                navButtons.forEach(btn => btn.disabled = false);
+                dateButtons.forEach(btn => btn.disabled = false);
+                datePicker.disabled = false;
+            }
+        };
+
+        const handleGameSelection = (tipoJuego) => {
+            juegoActual = tipoJuego;
+            document.querySelector('.nav-button.active')?.classList.remove('active');
+            document.getElementById(`btn${tipoJuego.charAt(0).toUpperCase() + tipoJuego.slice(1)}`).classList.add('active');
+            
+            if (tipoJuego === 'nacional' || tipoJuego === 'mendoza') {
+                dateControls.classList.add('visible');
+                // **ACTUALIZAR LINK MODO TV**
+                tvLink.href = `/templates/tv.html?fecha=${fechaActual}`;
+                fetchAndRender(juegoActual, fechaActual);
+            } else {
+                dateControls.classList.remove('visible');
+                // **RESETEAR LINK MODO TV**
+                tvLink.href = '/templates/tv.html';
+                fetchAndRender(tipoJuego, 'ultimo');
+            }
+        };
+
+        const handleDateSelection = (nuevaFecha, selectedButton) => {
+            fechaActual = nuevaFecha;
+            // **ACTUALIZAR LINK MODO TV CADA VEZ QUE CAMBIA LA FECHA**
+            tvLink.href = `/templates/tv.html?fecha=${fechaActual}`;
+
+            if (selectedButton) {
+                datePicker.value = '';
+            }
+            document.querySelector('.date-button.active')?.classList.remove('active');
+            if (selectedButton) selectedButton.classList.add('active');
+
+            if (juegoActual) {
+                fetchAndRender(juegoActual, fechaActual);
+            }
+        };
+
+        navButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const game = e.target.id.replace('btn', '').toLowerCase();
+                handleGameSelection(game);
+            });
+        });
+
+        document.getElementById('date-hoy').addEventListener('click', (e) => handleDateSelection('hoy', e.target));
+        document.getElementById('date-ayer').addEventListener('click', (e) => handleDateSelection('ayer', e.target));
+        datePicker.addEventListener('change', (e) => {
+            if(e.target.value) {
+                handleDateSelection(e.target.value, null);
+            }
+        });
+    </script>
+</body>
+</html>

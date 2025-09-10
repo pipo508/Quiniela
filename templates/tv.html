@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Resultados</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background: #0f0f23; color: #ffffff; height: 100vh; width: 100vw; overflow: hidden; }
+        #dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; height: 100%; width: 100%; gap: 5px; background-color: #000; transition: all 0.5s ease; }
+        .game-panel { background: linear-gradient(135deg, #1a1a2e, #16213e); padding: clamp(10px, 1.5vw, 20px); display: flex; flex-direction: column; overflow: hidden; position: relative; transition: opacity 0.6s ease, transform 0.6s ease; }
+        .game-panel h2 { font-size: clamp(16px, 1.8vw, 28px); text-align: center; margin-bottom: 1vh; color: #fff; text-shadow: 0 0 10px rgba(108, 99, 255, 0.5); border-bottom: 1px solid rgba(108, 99, 255, 0.3); padding-bottom: 1.2vh; font-weight: 600; }
+        .results-container { flex-grow: 1; overflow-y: auto; -ms-overflow-style: none; scrollbar-width: none; }
+        .results-container::-webkit-scrollbar { display: none; }
+        .sorteo { margin-bottom: 1.5vh; }
+        .sorteo h3 { font-size: clamp(12px, 1.1vw, 18px); color: #a0a0c0; margin-bottom: 0.8vh; font-weight: 400; }
+        .numeros-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(clamp(35px, 4.5vw, 60px), 1fr)); gap: clamp(5px, 0.6vw, 10px); }
+        .numero { background: linear-gradient(135deg, #6c63ff, #ff6b6b); border-radius: 8px; text-align: center; font-weight: 700; font-size: clamp(14px, 1.5vw, 24px); padding: clamp(5px, 1vh, 10px) 0; color: #ffffff; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); }
+        #panel-quini6 .numeros-grid { grid-template-columns: repeat(auto-fill, minmax(clamp(28px, 3.5vw, 45px), 1fr)); gap: clamp(4px, 0.4vw, 6px); }
+        #panel-quini6 .numero { font-size: clamp(11px, 1.2vw, 18px); padding: clamp(3px, 0.6vh, 7px) 0; border-radius: 6px; }
+        #dashboard-grid.carousel-active { display: flex; align-items: center; justify-content: center; }
+        .carousel-active .game-panel { opacity: 0; transform: scale(0.95); pointer-events: none; position: absolute; width: 95vw; height: 95vh; border-radius: 15px; }
+        .carousel-active .game-panel.is-visible { opacity: 1; transform: scale(1); pointer-events: auto; position: relative; }
+        #carousel-progress-container { position: fixed; bottom: 0; left: 0; width: 100%; height: 5px; background-color: rgba(108, 99, 255, 0.2); display: none; }
+        #carousel-progress-bar { width: 100%; height: 100%; background: linear-gradient(90deg, #6c63ff, #ff6b6b); transform-origin: left; animation: fill-progress 15s linear; }
+        @keyframes fill-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+        .spinner { border: 3px solid rgba(108, 99, 255, 0.3); border-radius: 50%; border-top: 3px solid #6c63ff; width: 5vh; height: 5vh; animation: spin 1s linear infinite; margin: 10vh auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .tv-controls { position: fixed; bottom: 20px; right: 20px; z-index: 1000; display: flex; gap: 15px; }
+        .tv-btn { background: rgba(108, 99, 255, 0.8); color: #fff; border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; text-decoration: none; }
+        .tv-btn:hover { transform: scale(1.1); box-shadow: 0 0 20px rgba(108, 99, 255, 0.7); }
+        .tv-btn.active { background: #ff6b6b; }
+        #fecha-display { position: fixed; top: 15px; left: 15px; background: rgba(0,0,0,0.5); padding: 8px 15px; border-radius: 10px; font-size: 16px; font-weight: 600; backdrop-filter: blur(5px); z-index: 999; }
+    </style>
+</head>
+<body>
+    <div id="dashboard-grid">
+        <div class="game-panel" id="panel-nacional"><h2>🎰 Nacional</h2><div class="results-container"></div></div>
+        <div class="game-panel" id="panel-mendoza"><h2>🏔️ Mendoza</h2><div class="results-container"></div></div>
+        <div class="game-panel" id="panel-telekino"><h2>📺 Telekino</h2><div class="results-container"></div></div>
+        <div class="game-panel" id="panel-quini6"><h2>🎲 Quini 6</h2><div class="results-container"></div></div>
+    </div>
+    
+    <div id="fecha-display"></div>
+
+    <div class="tv-controls">
+        <a href="/templates/index.html" class="tv-btn" id="back-btn" title="Volver">↩️</a>
+        <button class="tv-btn" id="carousel-btn" title="Modo Carrusel">🎠</button>
+        <button class="tv-btn" id="fullscreen-btn" title="Pantalla Completa">⛶</button>
+    </div>
+
+    <div id="carousel-progress-container">
+        <div id="carousel-progress-bar"></div>
+    </div>
+
+    <script>
+        const JUEGOS = ['nacional', 'mendoza', 'telekino', 'quini6'];
+        const dashboardGrid = document.getElementById('dashboard-grid');
+        const carouselBtn = document.getElementById('carousel-btn');
+        const progressContainer = document.getElementById('carousel-progress-container');
+        const fechaDisplay = document.getElementById('fecha-display');
+        
+        let allGameData = {};
+        let isCarouselActive = false;
+        let carouselInterval = null;
+        let carouselIndex = 0;
+
+        // LEER LA FECHA DE LA URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const fechaParaQuinielas = urlParams.get('fecha') || 'ayer'; // Valor por defecto: 'ayer'
+
+        function renderPanel(gameName, data, isCarousel) {
+            const container = document.querySelector(`#panel-${gameName} .results-container`);
+            container.innerHTML = '';
+            if (!data || data.length === 0) {
+                container.innerHTML = '<p style="text-align:center; font-size:1vw;">No se encontraron datos.</p>';
+                return;
+            }
+            if (isCarousel) {
+                let allNumbers = [];
+                data.forEach(sorteo => allNumbers.push(...sorteo.numeros));
+                const uniqueNumbers = [...new Set(allNumbers)].sort((a, b) => a - b);
+                let htmlNumeros = '<div class="numeros-grid matrix-view">';
+                uniqueNumbers.forEach(num => { htmlNumeros += `<div class="numero">${num}</div>`; });
+                htmlNumeros += '</div>';
+                container.innerHTML = htmlNumeros;
+            } else {
+                data.forEach(sorteo => {
+                    let htmlNumeros = '<div class="numeros-grid">';
+                    sorteo.numeros.forEach(num => { htmlNumeros += `<div class="numero">${num}</div>`; });
+                    htmlNumeros += '</div>';
+                    container.innerHTML += `<div class="sorteo"><h3>${sorteo.sorteo}</h3>${htmlNumeros}</div>`;
+                });
+            }
+        }
+
+        function reRenderAllPanels(isCarousel) {
+             JUEGOS.forEach(juego => {
+                if (allGameData[juego]) {
+                    renderPanel(juego, allGameData[juego], isCarousel);
+                }
+            });
+        }
+
+        async function fetchAllData() {
+            if (!isCarouselActive) {
+                JUEGOS.forEach(juego => {
+                    const container = document.querySelector(`#panel-${juego} .results-container`);
+                    if (container) container.innerHTML = '<div class="spinner"></div>';
+                });
+            }
+            
+            const fetchPromises = JUEGOS.map(juego => {
+                const fecha = (juego === 'nacional' || juego === 'mendoza') ? fechaParaQuinielas : 'ultimo';
+                return fetch(`http://127.0.0.1:5000/api/resultados/${juego}/${fecha}`)
+                    .then(res => res.ok ? res.json() : Promise.reject(`Error en ${juego}`))
+                    .then(data => {
+                        allGameData[juego] = data;
+                        return data;
+                    })
+                    .catch(err => { console.error(err); return null; })
+            });
+
+            try {
+                await Promise.all(fetchPromises);
+                reRenderAllPanels(isCarouselActive);
+            } catch (error) { console.error("Error al obtener todos los datos:", error); }
+        }
+        
+        function updateFechaDisplay() {
+            let textoFecha = 'Quinielas: ';
+            if (fechaParaQuinielas === 'hoy') {
+                textoFecha += 'Hoy';
+            } else if (fechaParaQuinielas === 'ayer') {
+                textoFecha += 'Ayer';
+            } else {
+                // Formatear la fecha YYYY-MM-DD a DD/MM/YYYY
+                const [year, month, day] = fechaParaQuinielas.split('-');
+                textoFecha += `${day}/${month}/${year}`;
+            }
+            fechaDisplay.textContent = textoFecha;
+        }
+
+        function restartProgressBar() {
+            const bar = document.getElementById('carousel-progress-bar');
+            bar.classList.remove('progress-animation');
+            void bar.offsetWidth;
+            bar.classList.add('progress-animation');
+        }
+
+        function showNextPanel() {
+            const panels = document.querySelectorAll('.game-panel');
+            panels.forEach(panel => panel.classList.remove('is-visible'));
+            panels[carouselIndex].classList.add('is-visible');
+            carouselIndex = (carouselIndex + 1) % panels.length;
+            restartProgressBar();
+        }
+
+        function toggleCarousel() {
+            isCarouselActive = !isCarouselActive;
+            dashboardGrid.classList.toggle('carousel-active', isCarouselActive);
+            carouselBtn.classList.toggle('active', isCarouselActive);
+            progressContainer.style.display = isCarouselActive ? 'block' : 'none';
+            reRenderAllPanels(isCarouselActive);
+            if (isCarouselActive) {
+                showNextPanel();
+                carouselInterval = setInterval(showNextPanel, 15000);
+            } else {
+                clearInterval(carouselInterval);
+                document.querySelectorAll('.game-panel').forEach(p => p.classList.remove('is-visible'));
+            }
+        }
+
+        carouselBtn.addEventListener('click', toggleCarousel);
+
+        document.getElementById('fullscreen-btn').addEventListener('click', () => {
+            if (!document.fullscreenElement) { document.documentElement.requestFullscreen(); }
+            else if (document.exitFullscreen) { document.exitFullscreen(); }
+        });
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            updateFechaDisplay();
+            fetchAllData();
+            setInterval(fetchAllData, 600000);
+        });
+    </script>
+</body>
+</html>
